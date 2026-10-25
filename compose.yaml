@@ -1,0 +1,50 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: 'postgresql://${DB_USER:?Définir DB_USER}:${DB_PASSWORD:?Définir DB_PASSWORD}@db:5432/${DB_NAME:?Définir DB_NAME}?serverVersion=17&charset=utf8'
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sleep infinity
+
+  web:
+    profiles: [web]
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    working_dir: /workspace/app
+    volumes:
+      - .:/workspace
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: 'postgresql://${DB_USER:?Définir DB_USER}:${DB_PASSWORD:?Définir DB_PASSWORD}@db:5432/${DB_NAME:?Définir DB_NAME}?serverVersion=17&charset=utf8'
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '${WEB_PORT:-8000}:8000'
+    command: php -S 0.0.0.0:8000 -t public public/index.php
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: '${DB_NAME:?Définir DB_NAME}'
+      POSTGRES_USER: '${DB_USER:?Définir DB_USER}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD:?Définir DB_PASSWORD}'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
