@@ -18,9 +18,9 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new GetCollection(),
         new Get(),
-        new Post(),
-        new Put(),
-        new Delete(),
+        new Post(security: "is_granted('ROLE_ORGANIZER')"),
+        new Put(security: "is_granted('ROLE_ORGANIZER')"),
+        new Delete(security: "is_granted('ROLE_ORGANIZER')"),
     ],
     normalizationContext: ['groups' => ['tournament:read']],
     denormalizationContext: ['groups' => ['tournament:write']],
