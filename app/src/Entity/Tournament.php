@@ -12,6 +12,7 @@ use App\Repository\TournamentRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\State\TournamentDeleteProcessor;
 
 #[ORM\Entity(repositoryClass: TournamentRepository::class)]
 #[ApiResource(
@@ -20,7 +21,10 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Get(),
         new Post(security: "is_granted('ROLE_ORGANIZER')"),
         new Put(security: "is_granted('ROLE_ORGANIZER')"),
-        new Delete(security: "is_granted('ROLE_ORGANIZER')"),
+        new Delete(
+            security: "is_granted('ROLE_ORGANIZER')",
+            processor: TournamentDeleteProcessor::class,
+        ),
     ],
     normalizationContext: ['groups' => ['tournament:read']],
     denormalizationContext: ['groups' => ['tournament:write']],
@@ -50,6 +54,10 @@ class Tournament
     #[Assert\Positive]
     #[Groups(['tournament:read', 'tournament:write'])]
     private ?int $seats = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['tournament:read'])]
+    private ?string $coverPath = null;
 
     public function getId(): ?int
     {
@@ -88,6 +96,18 @@ class Tournament
     public function setSeats(int $seats): static
     {
         $this->seats = $seats;
+
+        return $this;
+    }
+
+    public function getCoverPath(): ?string
+    {
+        return $this->coverPath;
+    }
+
+    public function setCoverPath(?string $coverPath): static
+    {
+        $this->coverPath = $coverPath;
 
         return $this;
     }
